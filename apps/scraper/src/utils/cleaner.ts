@@ -1,5 +1,5 @@
 const PROXY_PATTERN =
-	/(?:https:\/\/t\.me\/proxy\?|tg:\/\/proxy\?)server=([^&]+)&port=(\d+)&secret=([a-zA-Z0-9]+)/gi;
+	/(?:https:\/\/t\.me\/proxy\?|tg:\/\/proxy\?)server=([^&]+)&port=(\d+)&secret=([a-fA-F0-9]+)/gi;
 
 /**
  * Extracts MTProto proxy links from message text and anchor hrefs,
