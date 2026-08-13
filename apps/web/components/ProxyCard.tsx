@@ -1,7 +1,7 @@
 'use client';
 
 import { parseProxyLink, type ProxyItem } from '@proxyaggregator/types';
-import type { MouseEvent } from 'react';
+import { useRef, useState } from 'react';
 
 type ProxyCardProps = {
 	proxy: ProxyItem;
@@ -25,32 +25,65 @@ function pingBadgeLabel(proxy: ProxyItem): string {
 	return `${proxy.ping.toLocaleString('fa-IR')}ms`;
 }
 
-function toTelegramDeepLink(link: string): string {
-	const parsed = parseProxyLink(link);
-	if (!parsed) {
-		return link.replace(/https$/i, '');
+function copyWithFallback(text: string): boolean {
+	const textarea = document.createElement('textarea');
+	textarea.value = text;
+	textarea.setAttribute('readonly', '');
+	textarea.style.position = 'fixed';
+	textarea.style.top = '0';
+	textarea.style.left = '0';
+	textarea.style.opacity = '0';
+	document.body.appendChild(textarea);
+	textarea.focus();
+	textarea.select();
+	textarea.setSelectionRange(0, text.length);
+
+	try {
+		return document.execCommand('copy');
+	} catch {
+		return false;
+	} finally {
+		document.body.removeChild(textarea);
 	}
-
-	const secret = parsed.secret.replace(/https$/i, '');
-	return `tg://proxy?server=${parsed.server}&port=${parsed.port}&secret=${secret}`;
-}
-
-function openTelegramProxy(event: MouseEvent<HTMLAnchorElement>) {
-	event.preventDefault();
-	const href = event.currentTarget.getAttribute('href');
-	if (!href) {
-		return;
-	}
-
-	window.location.href = href;
 }
 
 export function ProxyCard({ proxy, index }: ProxyCardProps) {
+	const [copied, setCopied] = useState(false);
+	const [copyPulse, setCopyPulse] = useState(0);
+	const resetTimer = useRef<number | null>(null);
 	const parsed = parseProxyLink(proxy.link);
 	const server = parsed?.server ?? proxy.link;
 	const port = parsed?.port ?? '—';
 	const session = String(index + 1).padStart(3, '0');
-	const connectHref = toTelegramDeepLink(proxy.link);
+	const cleanedLink = proxy.link.replace(/&amp;/g, '&').trim();
+
+	function showCopiedFeedback() {
+		if (resetTimer.current !== null) {
+			window.clearTimeout(resetTimer.current);
+		}
+		setCopied(true);
+		setCopyPulse(tick => tick + 1);
+		resetTimer.current = window.setTimeout(() => {
+			setCopied(false);
+			resetTimer.current = null;
+		}, 2000);
+	}
+
+	async function handleCopy() {
+		// Show feedback immediately so mobile taps feel responsive even if clipboard is slow.
+		showCopiedFeedback();
+
+		try {
+			if (navigator.clipboard?.writeText) {
+				await navigator.clipboard.writeText(cleanedLink);
+				return;
+			}
+		} catch {
+			// Fall through to legacy copy for older / restricted mobile browsers.
+		}
+
+		copyWithFallback(cleanedLink);
+	}
 
 	return (
 		<article
@@ -71,14 +104,28 @@ export function ProxyCard({ proxy, index }: ProxyCardProps) {
 					<span className='text-term-mute'>port</span> <span className='ltr-iso text-term-amber'>{port}</span>
 				</p>
 				<p className='mt-2 break-all text-[11px] leading-5 text-term-mute'>
-					<span className='ltr-iso'>{connectHref}</span>
+					<span className='ltr-iso'>{cleanedLink}</span>
 				</p>
 			</div>
 
-			<div className='mt-5'>
-				<a href={connectHref} className='term-btn' onClick={openTelegramProxy}>
-					باز کردن در تلگرام
+			<div className='mt-5 flex items-center gap-2'>
+				<a href={cleanedLink} target='_self' className='term-btn min-w-0 flex-1'>
+					اتصال
 				</a>
+				<button
+					type='button'
+					onClick={() => void handleCopy()}
+					className={`inline-flex min-h-11 min-w-[4.5rem] shrink-0 touch-manipulation items-center justify-center rounded-md border px-3 py-2 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-term-amber/70 active:scale-95 sm:px-4 ${
+						copied
+							? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-300'
+							: 'border-term-line bg-term-bg/80 text-term-dim active:border-term-phosphor/40 active:bg-term-phosphor/10 active:text-term-phosphor hover:border-term-phosphor/40 hover:text-term-phosphor'
+					}`}
+					aria-label={copied ? 'کپی شد' : 'کپی لینک پروکسی'}
+				>
+					<span key={copyPulse} className='inline-block animate-copiedPop'>
+						{copied ? 'کپی شد!' : 'کپی'}
+					</span>
+				</button>
 			</div>
 		</article>
 	);

@@ -85,7 +85,8 @@ body {
 	.animate-blink,
 	.animate-caret,
 	.animate-scan,
-	.animate-pulseGlow {
+	.animate-pulseGlow,
+	.animate-copiedPop {
 		animation: none !important;
 	}
 

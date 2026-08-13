@@ -44,6 +44,11 @@ const config: Config = {
 					'0%, 100%': { opacity: '0.35' },
 					'50%': { opacity: '0.7' },
 				},
+				copiedPop: {
+					'0%': { transform: 'scale(1)' },
+					'40%': { transform: 'scale(1.08)' },
+					'100%': { transform: 'scale(1)' },
+				},
 			},
 			animation: {
 				rise: 'rise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both',
@@ -51,6 +56,7 @@ const config: Config = {
 				caret: 'caret 1.05s steps(1, end) infinite',
 				scan: 'scan 7s linear infinite',
 				pulseGlow: 'pulseGlow 3.5s ease-in-out infinite',
+				copiedPop: 'copiedPop 0.35s ease-out',
 			},
 		},
 	},
