@@ -11,5 +11,85 @@ html {
 }
 
 body {
-	@apply bg-ink-950 text-ink-50 antialiased;
+	@apply bg-term-bg text-term-phosphor antialiased;
+	background-image:
+		radial-gradient(1200px 500px at 80% -10%, rgba(168, 85, 247, 0.16), transparent 55%),
+		radial-gradient(900px 400px at 0% 100%, rgba(240, 171, 252, 0.08), transparent 50%);
+}
+
+.crt-overlay {
+	pointer-events: none;
+	position: fixed;
+	inset: 0;
+	z-index: 40;
+	background:
+		repeating-linear-gradient(
+			to bottom,
+			rgba(255, 255, 255, 0.015) 0px,
+			rgba(255, 255, 255, 0.015) 1px,
+			transparent 2px,
+			transparent 4px
+		);
+	mix-blend-mode: overlay;
+	opacity: 0.35;
+}
+
+.crt-vignette {
+	pointer-events: none;
+	position: fixed;
+	inset: 0;
+	z-index: 40;
+	background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.35) 100%);
+}
+
+.scan-beam {
+	pointer-events: none;
+	position: absolute;
+	inset-inline: 0;
+	height: 28%;
+	background: linear-gradient(to bottom, transparent, rgba(196, 165, 255, 0.07), transparent);
+	animation: scan 7s linear infinite;
+}
+
+.terminal-shell {
+	@apply relative overflow-hidden rounded-xl border border-term-line/80 bg-term-panel/90 shadow-terminal backdrop-blur-sm sm:rounded-2xl;
+}
+
+.prompt-caret {
+	@apply ms-1 inline-block h-[1em] w-[0.55ch] translate-y-[0.12em] bg-term-phosphor align-middle;
+	animation: caret 1.05s steps(1, end) infinite;
+}
+
+.ltr-iso {
+	direction: ltr;
+	unicode-bidi: isolate;
+	text-align: left;
+}
+
+@layer components {
+	.term-btn {
+		@apply inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-term-phosphor/30 bg-term-phosphor/10 px-3 py-2 text-sm font-medium text-term-phosphor transition duration-300 ease-out;
+		@apply hover:-translate-y-0.5 hover:border-term-phosphor/70 hover:bg-term-phosphor/20 hover:shadow-glow;
+		@apply active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-term-amber/70;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	.scan-beam,
+	.prompt-caret,
+	.animate-rise,
+	.animate-blink,
+	.animate-caret,
+	.animate-scan,
+	.animate-pulseGlow {
+		animation: none !important;
+	}
+
+	.term-btn:hover {
+		transform: none;
+	}
 }

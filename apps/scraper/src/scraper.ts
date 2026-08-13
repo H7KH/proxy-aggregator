@@ -3,55 +3,75 @@ import path from 'node:path';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { config } from './config';
-import { extractProxiesFromText } from './utils/cleaner';
+import { checkProxiesHealth, sortByHealth } from './utils/checker';
+import { extractProxiesFromContent } from './utils/cleaner';
 
-async function scrape(): Promise<void> {
-	console.log(`Fetching public channel preview: ${config.targetChannel}`);
+const REQUEST_HEADERS = {
+	'User-Agent': 'Mozilla/5.0 (compatible; ProxyAggregator/1.0; +https://github.com)',
+	Accept: 'text/html,application/xhtml+xml',
+};
 
-	const { data } = await axios.get<string>(config.targetChannel, {
+async function scrapeChannel(channelUrl: string): Promise<string[]> {
+	console.log(`Fetching public channel preview: ${channelUrl}`);
+
+	const { data } = await axios.get<string>(channelUrl, {
 		timeout: 30_000,
-		headers: {
-			'User-Agent': 'Mozilla/5.0 (compatible; ProxyAggregator/1.0; +https://github.com)',
-			Accept: 'text/html,application/xhtml+xml',
-		},
+		headers: REQUEST_HEADERS,
 	});
 
 	const $ = cheerio.load(data);
-	const chunks: string[] = [];
+	let allText = '';
+	const allHrefs: string[] = [];
 
 	$('.tgme_widget_message_text').each((_, element) => {
-		chunks.push($(element).text());
+		allText += $(element).text() + '\n';
+
 		$(element)
-			.find('a[href]')
+			.find('a')
 			.each((__, anchor) => {
 				const href = $(anchor).attr('href');
 				if (href) {
-					chunks.push(href);
+					allHrefs.push(href);
 				}
 			});
 	});
 
-	$('a[href*="t.me/proxy"], a[href*="tg://proxy"]').each((_, element) => {
-		const href = $(element).attr('href');
-		if (href) {
-			chunks.push(href);
+	return extractProxiesFromContent(allText, allHrefs);
+}
+
+async function scrape(): Promise<void> {
+	const collected: string[] = [];
+
+	for (const channel of config.targetChannels) {
+		try {
+			const proxies = await scrapeChannel(channel);
+			console.log(`Found ${proxies.length} proxies in ${channel}`);
+			collected.push(...proxies);
+		} catch (error) {
+			console.error(`Failed to scrape ${channel}. Continuing with remaining channels.`, error);
 		}
-	});
-
-	const uniqueProxies = [...new Set(chunks.flatMap(extractProxiesFromText))];
-
-	if (uniqueProxies.length === 0) {
-		console.warn('No MTProto proxies found. Leaving existing data unchanged.');
-		return;
 	}
+
+	const uniqueLinks = [...new Set(collected)];
+
+	if (uniqueLinks.length === 0) {
+		console.warn('No MTProto proxies found. Exiting...');
+		process.exit(0);
+	}
+
+	console.log(`Running TCP health checks on ${uniqueLinks.length} unique proxies...`);
+	const checked = await checkProxiesHealth(uniqueLinks);
+	const ranked = sortByHealth(checked);
+	const aliveCount = ranked.filter(item => item.isAlive).length;
+	console.log(`Health check complete: ${aliveCount} alive, ${ranked.length - aliveCount} unreachable`);
 
 	const dir = path.dirname(config.outputFilePath);
 	if (!fs.existsSync(dir)) {
 		fs.mkdirSync(dir, { recursive: true });
 	}
 
-	fs.writeFileSync(config.outputFilePath, `${JSON.stringify(uniqueProxies, null, 2)}\n`);
-	console.log(`Saved ${uniqueProxies.length} unique proxies to ${config.outputFilePath}`);
+	fs.writeFileSync(config.outputFilePath, `${JSON.stringify(ranked, null, 2)}\n`);
+	console.log(`Saved ${ranked.length} proxies to ${config.outputFilePath}`);
 }
 
 scrape().catch(error => {

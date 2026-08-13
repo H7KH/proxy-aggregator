@@ -1,10 +1,38 @@
+import type { ProxyItem } from '@proxyaggregator/types';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ProxyList } from '../components/ProxyList';
+import { TerminalWindow } from '../components/TerminalWindow';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '../lib/site';
 
 export const revalidate = 3600;
 
-async function getProxyLinks(): Promise<string[]> {
+function normalizeProxies(data: unknown): ProxyItem[] {
+	if (!Array.isArray(data)) {
+		return [];
+	}
+
+	return data.flatMap(item => {
+		if (typeof item === 'string') {
+			return [{ link: item, ping: -1, isAlive: false }];
+		}
+		if (
+			item &&
+			typeof item === 'object' &&
+			'link' in item &&
+			typeof item.link === 'string' &&
+			'ping' in item &&
+			typeof item.ping === 'number' &&
+			'isAlive' in item &&
+			typeof item.isAlive === 'boolean'
+		) {
+			return [item as ProxyItem];
+		}
+		return [];
+	});
+}
+
+async function getProxies(): Promise<ProxyItem[]> {
 	const remoteUrl = process.env.PROXIES_JSON_URL;
 
 	if (remoteUrl) {
@@ -12,67 +40,68 @@ async function getProxyLinks(): Promise<string[]> {
 		if (!response.ok) {
 			throw new Error(`Failed to fetch proxies (${response.status})`);
 		}
-		return response.json() as Promise<string[]>;
+		return normalizeProxies(await response.json());
 	}
 
 	const localPath = path.join(process.cwd(), '..', 'scraper', 'data', 'proxies.json');
 
 	try {
 		const raw = await fs.readFile(localPath, 'utf8');
-		return JSON.parse(raw) as string[];
+		return normalizeProxies(JSON.parse(raw));
 	} catch {
 		return [];
 	}
 }
 
 export default async function HomePage() {
-	const proxies = await getProxyLinks();
-	const updatedAt = new Date().toISOString();
+	const proxies = await getProxies();
+	const aliveCount = proxies.filter(item => item.isAlive).length;
+
+	const jsonLd = {
+		'@context': 'https://schema.org',
+		'@type': 'WebPage',
+		name: `${SITE_NAME} — پروکسی‌های رایگان MTProto تلگرام`,
+		description: SITE_DESCRIPTION,
+		url: SITE_URL,
+		inLanguage: 'fa-IR',
+		mainEntity: {
+			'@type': 'ItemList',
+			numberOfItems: proxies.length,
+			itemListElement: proxies.slice(0, 50).map((item, index) => ({
+				'@type': 'ListItem',
+				position: index + 1,
+				url: SITE_URL,
+				name: item.link,
+			})),
+		},
+	};
 
 	return (
-		<div className='mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-10 sm:px-6 lg:px-8'>
-			<header className='border-b border-white/10 pb-10'>
-				<p className='text-xs font-medium uppercase tracking-[0.22em] text-signal-light'>MTProto directory</p>
-				<h1 className='mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl'>
-					Free Telegram MTProto proxies, refreshed every hour
-				</h1>
-				<p className='mt-4 max-w-2xl text-base leading-7 text-ink-400'>
-					ProxyAggregator collects public MTProto links from Telegram channel web previews, standardizes them to{' '}
-					<code className='font-mono text-ink-100'>tg://proxy</code> URLs, and publishes a crawlable directory so you can
-					connect in one tap.
-				</p>
-				<dl className='mt-8 flex flex-wrap gap-6 text-sm text-ink-400'>
-					<div>
-						<dt className='uppercase tracking-wide text-xs'>Active links</dt>
-						<dd className='mt-1 font-mono text-lg text-white'>{proxies.length}</dd>
-					</div>
-					<div>
-						<dt className='uppercase tracking-wide text-xs'>Update cadence</dt>
-						<dd className='mt-1 font-mono text-lg text-white'>Hourly</dd>
-					</div>
-				</dl>
-			</header>
+		<TerminalWindow>
+			<script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+			<div className='flex min-h-[calc(100dvh-4.5rem)] flex-col px-3 py-5 sm:px-6 sm:py-7 md:px-8 md:py-8'>
+				<header className='animate-rise border-b border-term-line/80 pb-6 sm:pb-8'>
+					<h1 className='mt-3 max-w-3xl text-2xl font-semibold leading-snug tracking-tight text-term-phosphor sm:text-4xl md:text-5xl'>
+						پروکسی‌های رایگان تلگرام
+					</h1>
+					<dl className='mt-6 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-8'></dl>
+				</header>
 
-			<main className='flex-1 py-10'>
-				<section aria-labelledby='proxy-list-heading'>
-					<div className='mb-6 flex items-end justify-between gap-4'>
-						<h2 id='proxy-list-heading' className='text-xl font-semibold text-white'>
-							Available proxies
-						</h2>
-						<p className='text-xs text-ink-400'>
-							Last rendered <time dateTime={updatedAt}>{updatedAt}</time>
-						</p>
-					</div>
-					<ProxyList links={proxies} />
-				</section>
-			</main>
-
-			<footer className='border-t border-white/10 pt-6 text-sm text-ink-400'>
-				<p>
-					Public MTProto links only. Proxies are collected from public Telegram channel web views and may go offline
-					without notice.
-				</p>
-			</footer>
-		</div>
+				<main className='flex-1 py-6 sm:py-8'>
+					<section aria-labelledby='proxy-list-heading'>
+						<div className='mb-5 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-end sm:justify-between'>
+							<h2 id='proxy-list-heading' className='text-lg font-semibold text-term-phosphor sm:text-xl'>
+								پروکسی‌های موجود
+							</h2>
+							<p className='text-xs text-term-mute'>
+								{aliveCount.toLocaleString('fa-IR')} فعال از {proxies.length.toLocaleString('fa-IR')}{' '}
+								لینک
+							</p>
+						</div>
+						<ProxyList initialProxies={proxies} />
+					</section>
+				</main>
+			</div>
+		</TerminalWindow>
 	);
 }

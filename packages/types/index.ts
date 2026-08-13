@@ -1,5 +1,5 @@
 export interface ScraperConfig {
-	targetChannel: string;
+	targetChannels: string[];
 	outputFilePath: string;
 }
 
@@ -8,6 +8,12 @@ export interface ParsedProxy {
 	port: string;
 	secret: string;
 	fullLink: string;
+}
+
+export interface ProxyItem {
+	link: string;
+	ping: number; // Ping in ms, or -1 if unreachable
+	isAlive: boolean;
 }
 
 export function parseProxyLink(fullLink: string): ParsedProxy | null {

@@ -1,11 +1,18 @@
 const PROXY_PATTERN =
-	/(?:https:\/\/t\.me\/proxy|tg:\/\/proxy)\?server=([^&]+)&(?:amp;)?port=(\d+)&(?:amp;)?secret=([a-zA-Z0-9]+?)(?=https:\/\/|tg:\/\/|&|$)/gi;
+	/(?:https:\/\/t\.me\/proxy\?|tg:\/\/proxy\?)server=([^&]+)&port=(\d+)&secret=([a-zA-Z0-9]+)/gi;
 
-export function extractProxiesFromText(rawText: string): string[] {
-	const cleanedText = rawText.replace(/\s+/g, '').replace(/&amp;/gi, '&');
+/**
+ * Extracts MTProto proxy links from message text and anchor hrefs,
+ * then standardizes them to the `tg://proxy?...` scheme.
+ */
+export function extractProxiesFromContent(rawText: string, hrefs: string[]): string[] {
+	// Collapse whitespace so proxy URLs broken across line wraps still match.
+	const cleanedText = rawText.replace(/\s+/g, '');
+	const combinedContent = `${cleanedText}\n${hrefs.join('\n')}`.replace(/&amp;/gi, '&');
+
 	const proxies: string[] = [];
 
-	for (const match of cleanedText.matchAll(PROXY_PATTERN)) {
+	for (const match of combinedContent.matchAll(PROXY_PATTERN)) {
 		const server = decodeURIComponent(match[1] ?? '');
 		const port = match[2] ?? '';
 		const secret = decodeURIComponent(match[3] ?? '');

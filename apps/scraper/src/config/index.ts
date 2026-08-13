@@ -1,5 +1,7 @@
-import path from 'node:path';
 import type { ScraperConfig } from '@proxyaggregator/types';
+import path from 'node:path';
+
+const DEFAULT_CHANNELS = ['https://t.me/s/data_proxy', 'https://t.me/iMTProto'];
 
 function toChannelWebView(url: string): string {
 	const match = url.match(/^https?:\/\/t\.me\/(?!s\/)([^/?#]+)/i);
@@ -9,7 +11,23 @@ function toChannelWebView(url: string): string {
 	return url;
 }
 
+function resolveChannels(): string[] {
+	const fromList = process.env.TARGET_CHANNELS;
+	const fromSingle = process.env.TARGET_CHANNEL;
+
+	const raw = fromList
+		? fromList
+				.split(',')
+				.map(channel => channel.trim())
+				.filter(Boolean)
+		: fromSingle
+			? [fromSingle]
+			: DEFAULT_CHANNELS;
+
+	return [...new Set(raw.map(toChannelWebView))];
+}
+
 export const config: ScraperConfig = {
-	targetChannel: toChannelWebView(process.env.TARGET_CHANNEL || 'https://t.me/s/data_proxy'),
+	targetChannels: resolveChannels(),
 	outputFilePath: process.env.OUTPUT_PATH || path.join(process.cwd(), 'data', 'proxies.json'),
 };
