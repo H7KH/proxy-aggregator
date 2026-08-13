@@ -1,0 +1,24 @@
+{
+	"name": "proxyaggregator",
+	"version": "1.0.0",
+	"private": true,
+	"description": "SEO-optimized MTProto proxy directory with an automated scraper and Next.js frontend.",
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"scripts": {
+		"scrape": "npm run scrape -w apps/scraper",
+		"dev": "npm run dev -w apps/web",
+		"build": "npm run build -w apps/web",
+		"start": "npm run start -w apps/web",
+		"format": "prettier --write \"apps/**/*.{ts,tsx}\" \"packages/**/*.ts\""
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"license": "ISC",
+	"devDependencies": {
+		"prettier": "^3.6.2"
+	}
+}
