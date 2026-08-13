@@ -20,6 +20,10 @@ export const metadata: Metadata = {
 	applicationName: SITE_NAME,
 	keywords: ['پروکسی تلگرام', 'MTProto', 'پروکسی رایگان', 'tg://proxy', 'پروکسی‌اگریگیتور'],
 	authors: [{ name: SITE_NAME }],
+	icons: {
+		icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+		apple: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+	},
 	alternates: {
 		canonical: '/',
 	},
@@ -30,11 +34,13 @@ export const metadata: Metadata = {
 		title: `${SITE_NAME} — پروکسی‌های رایگان MTProto تلگرام`,
 		description: SITE_DESCRIPTION,
 		locale: 'fa_IR',
+		images: [{ url: '/favicon.svg', width: 256, height: 256, alt: SITE_NAME }],
 	},
 	twitter: {
-		card: 'summary_large_image',
+		card: 'summary',
 		title: `${SITE_NAME} — پروکسی‌های رایگان MTProto تلگرام`,
 		description: SITE_DESCRIPTION,
+		images: ['/favicon.svg'],
 	},
 	robots: {
 		index: true,

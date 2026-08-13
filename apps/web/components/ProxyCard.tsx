@@ -78,9 +78,7 @@ export function ProxyCard({ proxy, index }: ProxyCardProps) {
 				await navigator.clipboard.writeText(cleanedLink);
 				return;
 			}
-		} catch {
-			// Fall through to legacy copy for older / restricted mobile browsers.
-		}
+		} catch {}
 
 		copyWithFallback(cleanedLink);
 	}
@@ -92,7 +90,9 @@ export function ProxyCard({ proxy, index }: ProxyCardProps) {
 		>
 			<div>
 				<div className='mb-3 flex items-center justify-between gap-2'>
-					<p className='font-mono text-[10px] tracking-widest text-term-mute sm:text-[11px]'>session_{session}</p>
+					<p className='font-mono text-[10px] tracking-widest text-term-mute sm:text-[11px]'>
+						session_{session}
+					</p>
 					<span className={`rounded-full border px-2 py-0.5 font-mono text-[11px] ${pingBadgeClass(proxy)}`}>
 						{pingBadgeLabel(proxy)}
 					</span>

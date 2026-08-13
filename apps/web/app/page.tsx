@@ -1,6 +1,7 @@
 import type { ProxyItem } from '@proxyaggregator/types';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { BrandLogo } from '../components/BrandLogo';
 import { ProxyList } from '../components/ProxyList';
 import { TerminalWindow } from '../components/TerminalWindow';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '../lib/site';
@@ -81,10 +82,8 @@ export default async function HomePage() {
 			<script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 			<div className='flex min-h-[calc(100dvh-4.5rem)] flex-col px-3 py-5 sm:px-6 sm:py-7 md:px-8 md:py-8'>
 				<header className='animate-rise border-b border-term-line/80 pb-6 sm:pb-8'>
-					<h1 className='mt-3 max-w-3xl text-2xl font-semibold leading-snug tracking-tight text-term-phosphor sm:text-4xl md:text-5xl'>
-						پروکسی‌های رایگان تلگرام
-					</h1>
-					<dl className='mt-6 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-8'></dl>
+					<BrandLogo size='lg' priority />
+					<p className='mt-4 max-w-2xl text-sm leading-8 text-term-dim sm:text-base'>{SITE_DESCRIPTION}</p>
 				</header>
 
 				<main className='flex-1 py-6 sm:py-8'>
@@ -94,8 +93,7 @@ export default async function HomePage() {
 								پروکسی‌های موجود
 							</h2>
 							<p className='text-xs text-term-mute'>
-								{aliveCount.toLocaleString('fa-IR')} فعال از {proxies.length.toLocaleString('fa-IR')}{' '}
-								لینک
+								{aliveCount.toLocaleString('fa-IR')} فعال از {proxies.length.toLocaleString('fa-IR')} لینک
 							</p>
 						</div>
 						<ProxyList initialProxies={proxies} />
