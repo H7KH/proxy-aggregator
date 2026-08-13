@@ -13,7 +13,7 @@ const vazir = Vazirmatn({
 export const metadata: Metadata = {
 	metadataBase: new URL(SITE_URL),
 	title: {
-		default: `${SITE_NAME} — پروکسی‌های رایگان MTProto تلگرام`,
+		default: `${SITE_NAME} — پروکسی‌های رایگان تلگرام`,
 		template: `%s | ${SITE_NAME}`,
 	},
 	description: SITE_DESCRIPTION,
