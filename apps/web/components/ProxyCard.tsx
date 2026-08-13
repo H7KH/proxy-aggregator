@@ -1,4 +1,7 @@
+'use client';
+
 import { parseProxyLink, type ProxyItem } from '@proxyaggregator/types';
+import type { MouseEvent } from 'react';
 
 type ProxyCardProps = {
 	proxy: ProxyItem;
@@ -22,17 +25,24 @@ function pingBadgeLabel(proxy: ProxyItem): string {
 	return `${proxy.ping.toLocaleString('fa-IR')}ms`;
 }
 
-function toTelegramHttpLink(link: string, parsed: ReturnType<typeof parseProxyLink>): string {
-	if (parsed) {
-		const params = new URLSearchParams({
-			server: parsed.server,
-			port: parsed.port,
-			secret: parsed.secret,
-		});
-		return `https://t.me/proxy?${params.toString()}`;
+function toTelegramDeepLink(link: string): string {
+	const parsed = parseProxyLink(link);
+	if (!parsed) {
+		return link.replace(/https$/i, '');
 	}
 
-	return link.replace(/^tg:\/\/proxy/i, 'https://t.me/proxy');
+	const secret = parsed.secret.replace(/https$/i, '');
+	return `tg://proxy?server=${parsed.server}&port=${parsed.port}&secret=${secret}`;
+}
+
+function openTelegramProxy(event: MouseEvent<HTMLAnchorElement>) {
+	event.preventDefault();
+	const href = event.currentTarget.getAttribute('href');
+	if (!href) {
+		return;
+	}
+
+	window.location.href = href;
 }
 
 export function ProxyCard({ proxy, index }: ProxyCardProps) {
@@ -40,7 +50,7 @@ export function ProxyCard({ proxy, index }: ProxyCardProps) {
 	const server = parsed?.server ?? proxy.link;
 	const port = parsed?.port ?? '—';
 	const session = String(index + 1).padStart(3, '0');
-	const connectHref = toTelegramHttpLink(proxy.link, parsed);
+	const connectHref = toTelegramDeepLink(proxy.link);
 
 	return (
 		<article
@@ -61,12 +71,12 @@ export function ProxyCard({ proxy, index }: ProxyCardProps) {
 					<span className='text-term-mute'>port</span> <span className='ltr-iso text-term-amber'>{port}</span>
 				</p>
 				<p className='mt-2 break-all text-[11px] leading-5 text-term-mute'>
-					<span className='ltr-iso'>{proxy.link}</span>
+					<span className='ltr-iso'>{connectHref}</span>
 				</p>
 			</div>
 
 			<div className='mt-5'>
-				<a href={connectHref} className='term-btn'>
+				<a href={connectHref} className='term-btn' onClick={openTelegramProxy}>
 					باز کردن در تلگرام
 				</a>
 			</div>
