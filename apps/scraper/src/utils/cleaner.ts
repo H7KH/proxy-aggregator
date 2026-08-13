@@ -6,9 +6,12 @@ const PROXY_PATTERN =
  * then standardizes them to the `tg://proxy?...` scheme.
  */
 export function extractProxiesFromContent(rawText: string, hrefs: string[]): string[] {
+	const decodedText = rawText.replace(/&amp;/gi, '&');
+	const decodedHrefs = hrefs.map(href => href.replace(/&amp;/gi, '&'));
+
 	// Collapse whitespace so proxy URLs broken across line wraps still match.
-	const cleanedText = rawText.replace(/\s+/g, '');
-	const combinedContent = `${cleanedText}\n${hrefs.join('\n')}`.replace(/&amp;/gi, '&');
+	const cleanedText = decodedText.replace(/\s+/g, '');
+	const combinedContent = `${cleanedText}\n${decodedHrefs.join('\n')}`;
 
 	const proxies: string[] = [];
 
