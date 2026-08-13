@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 	},
 	description: SITE_DESCRIPTION,
 	applicationName: SITE_NAME,
-	keywords: ['پروکسی تلگرام', 'MTProto', 'پروکسی رایگان', 'پروکسی‌اگریگیتور'],
+	keywords: ['پروکسی تلگرام', 'پروکسی رایگان', 'پروکسی‌اگریگیتور'],
 	authors: [{ name: SITE_NAME }],
 	icons: {
 		icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
